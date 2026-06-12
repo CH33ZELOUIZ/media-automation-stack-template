@@ -1,6 +1,6 @@
 # Media Automation Stack Template
 
-A public-safe Docker Compose template for a private homelab media automation stack.
+A Docker Compose template for a private homelab media automation stack.
 
 It focuses on reusable structure rather than one person's live config:
 
@@ -54,7 +54,7 @@ Then configure each app through its UI.
 
 - [Path contract](docs/path-contract.md)
 - [VPN/qBittorrent pattern](docs/vpn-qbittorrent.md)
-- [Sanitization notes](docs/sanitization.md)
+- [Template notes](docs/template-notes.md)
 
 ## License
 

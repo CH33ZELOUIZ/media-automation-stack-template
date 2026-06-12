@@ -1,6 +1,6 @@
-# Sanitization notes
+# Template notes
 
-This template is intentionally generic. Before publishing your own stack:
+Before publishing or sharing your own stack:
 
 - Remove real `.env` files.
 - Remove app config directories.
