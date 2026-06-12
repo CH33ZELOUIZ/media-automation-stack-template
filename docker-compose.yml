@@ -1,0 +1,159 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "${QBIT_WEBUI_PORT:-8080}:8080"      # qBittorrent WebUI
+      - "${TORRENT_PORT:-6881}:6881"         # BitTorrent TCP
+      - "${TORRENT_PORT:-6881}:6881/udp"     # BitTorrent UDP
+    environment:
+      TZ: ${TZ:-UTC}
+      VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER:-custom}
+      VPN_TYPE: ${VPN_TYPE:-wireguard}
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY:-replace-me}
+      WIREGUARD_ADDRESSES: ${WIREGUARD_ADDRESSES:-replace-me}
+      SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:-}
+      FIREWALL_INPUT_PORTS: 8080,${TORRENT_PORT:-6881}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/gluetun:/gluetun
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    network_mode: "service:gluetun"
+    depends_on:
+      - gluetun
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+      WEBUI_PORT: "8080"
+      TORRENTING_PORT: "${TORRENT_PORT:-6881}"
+    volumes:
+      - ${CONFIG_ROOT:-./config}/qbittorrent:/config
+      - ${DATA_ROOT:-./data}:/data
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    ports:
+      - "${PROWLARR_PORT:-9696}:9696"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/prowlarr:/config
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    ports:
+      - "${SONARR_PORT:-8989}:8989"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/sonarr:/config
+      - ${DATA_ROOT:-./data}:/data
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    ports:
+      - "${RADARR_PORT:-7878}:7878"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/radarr:/config
+      - ${DATA_ROOT:-./data}:/data
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    ports:
+      - "${LIDARR_PORT:-8686}:8686"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/lidarr:/config
+      - ${DATA_ROOT:-./data}:/data
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    ports:
+      - "${BAZARR_PORT:-6767}:6767"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/bazarr:/config
+      - ${DATA_ROOT:-./data}:/data
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "${JELLYFIN_PORT:-8096}:8096"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/jellyfin:/config
+      - ${DATA_ROOT:-./data}/media:/data/media:ro
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    ports:
+      - "${JELLYSEERR_PORT:-5055}:5055"
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${CONFIG_ROOT:-./config}/jellyseerr:/app/config
+
+  unpackerr:
+    image: golift/unpackerr:latest
+    container_name: unpackerr
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      UN_SONARR_0_URL: http://sonarr:8989
+      UN_SONARR_0_API_KEY: ${SONARR_API_KEY:-replace-me}
+      UN_RADARR_0_URL: http://radarr:7878
+      UN_RADARR_0_API_KEY: ${RADARR_API_KEY:-replace-me}
+      UN_LIDARR_0_URL: http://lidarr:8686
+      UN_LIDARR_0_API_KEY: ${LIDARR_API_KEY:-replace-me}
+    volumes:
+      - ${DATA_ROOT:-./data}:/data
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    profiles: ["optional"]
+    ports:
+      - "${FLARESOLVERR_PORT:-8191}:8191"
+    environment:
+      TZ: ${TZ:-UTC}
